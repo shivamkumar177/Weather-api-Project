@@ -7,6 +7,21 @@ const api = {
 }
 const searchbox = document.querySelector('.search-box');
 searchbox.addEventListener('keypress', setQuery);
+window.addEventListener('load', () => {
+    let long;
+    let lat;
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(position => {
+            //console.log(position);
+            long = position.coords.longitude;
+            lat = position.coords.latitude;
+            fetch(`${api.base}weather?lat=${lat}&lon=${long}&units=metric&appid=${api.key}`)
+                .then(weather => {
+                    return weather.json();
+                }).then(display);
+        })
+    }
+})
 
 function setQuery(e) {
     if (e.keyCode == 13) {
@@ -24,18 +39,23 @@ function getResult(query) {
 function display(weather) {
     //console.log(weather);
     let city = document.querySelector('.location .city');
-    city.innerText = `${weather.name},${weather.sys.country}`;
+    let temp = document.querySelector('.current .temp');
+    let weather_t = document.querySelector('.current .weather');
+    let hilow = document.querySelector('.current .hi-low');
+    if (weather.cod == 404) {
+        city.innerText = "Not Found";
+        temp.innerHTML = " ";
+        weather_t.innerText = " ";
+        hilow.innerText = " ";
+    } else {
+        city.innerText = `${weather.name},${weather.sys.country}`;
+        temp.innerHTML = `${Math.round(weather.main.temp)}<span>°c</span>`;
+        weather_t.innerText = weather.weather[0].main;
+        hilow.innerText = `${Math.round(weather.main.temp_min)}°c / ${Math.round(weather.main.temp_max)}°c`;
+    }
     let now = new Date();
     let date = document.querySelector('.location .date');
     date.innerText = dateBuild(now);
-    let temp = document.querySelector('.current .temp');
-    temp.innerHTML = `${Math.round(weather.main.temp)}<span>°c</span>`;
-
-    let weather_t = document.querySelector('.current .weather');
-    weather_t.innerText = weather.weather[0].main;
-
-    let hilow = document.querySelector('.current .hi-low');
-    hilow.innerText = `${Math.round(weather.main.temp_min)}°c / ${Math.round(weather.main.temp_max)}°c`;
 }
 
 function dateBuild(d) {
